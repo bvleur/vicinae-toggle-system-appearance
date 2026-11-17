@@ -1,28 +1,60 @@
 name: Release
 
-# Pushing a tag like v1.0.0 builds the extension and attaches it to a GitHub release.
+# Two ways to release:
+#  - Actions tab > Release > "Run workflow", choose major/minor/patch: bumps the version (scripts/release.sh),
+#    pushes the release commit and tag, then builds and publishes the GitHub release.
+#  - Push a v* tag yourself (e.g. from scripts/release.sh on your machine): builds and publishes that tag.
 on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semver component to bump
+        type: choice
+        options: [patch, minor, major]
+        default: patch
   push:
     tags: ["v*"]
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the release script needs all tags
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: npm
-      - run: npm ci
-      # `vici build` writes the built extension to ~/.local/share/vicinae/extensions/<name>
-      - run: npm run build
-      - name: Package
-        run: tar -czf toggle-system-appearance.tar.gz -C "$HOME/.local/share/vicinae/extensions/toggle-system-appearance" .
+      - name: Bump version, commit and tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          scripts/release.sh "${{ inputs.bump }}"
+      - name: Work out the tag
+        id: tag
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            echo "name=$(git tag --list 'v*' --sort=-v:refname | head -n1)" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build from the tag
+        run: |
+          git checkout "${{ steps.tag.outputs.name }}"
+          npm ci
+          # `vici build` writes the built extension to ~/.local/share/vicinae/extensions/<name>
+          npm run build
+          tar -czf toggle-system-appearance.tar.gz -C "$HOME/.local/share/vicinae/extensions/toggle-system-appearance" .
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" toggle-system-appearance.tar.gz --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "${{ steps.tag.outputs.name }}" toggle-system-appearance.tar.gz --title "${{ steps.tag.outputs.name }}" --generate-notes
