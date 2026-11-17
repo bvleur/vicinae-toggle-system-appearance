@@ -21,7 +21,7 @@ npm run build   # vici build, output in ~/.local/share/vicinae/extensions/toggle
 ## Release
 
 <!-- release:start -->
-Current version: not released yet
+Current version: [v1.0.0](https://github.com/bvleur/vicinae-toggle-system-appearance/releases/tag/v1.0.0) ([all release notes](https://github.com/bvleur/vicinae-toggle-system-appearance/releases))
 <!-- release:end -->
 
 Release from GitHub: **Actions > Release > Run workflow**, pick `major`, `minor` or `patch`. The workflow bumps `package.json` and this README (`scripts/release.sh`), pushes the release commit and tag, builds the extension and creates the GitHub release with generated release notes and `toggle-system-appearance.tar.gz` attached. The first release is `major` (v1.0.0).
