@@ -24,9 +24,13 @@ npm run build   # vici build, output in ~/.local/share/vicinae/extensions/toggle
 Current version: not released yet
 <!-- release:end -->
 
+Release from GitHub: **Actions > Release > Run workflow**, pick `major`, `minor` or `patch`. The workflow bumps `package.json` and this README (`scripts/release.sh`), pushes the release commit and tag, builds the extension and creates the GitHub release with generated release notes and `toggle-system-appearance.tar.gz` attached. The first release is `major` (v1.0.0).
+
+Or locally:
+
 ```bash
 scripts/release.sh patch   # or minor / major: bumps package.json and this README, tags and pushes
 scripts/release.sh --check # every tag has a GitHub release and this README names the latest version
 ```
 
-Pushing the tag runs the `Release` workflow, which builds the extension and creates the GitHub release with generated release notes and `toggle-system-appearance.tar.gz` attached. The first release is `scripts/release.sh major` (v1.0.0). Release notes are the [GitHub releases](../../releases).
+Pushing a `v*` tag by hand runs the same build and release steps. Release notes are the [GitHub releases](../../releases).
